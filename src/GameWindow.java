@@ -3,26 +3,20 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.EventObject;
 
-public class GameWindow extends JFrame  {
+import static java.lang.Thread.sleep;
+
+public class GameWindow extends JFrame implements Runnable  {
     private JPanel screen;
     private JLabel dayTimer;
     private JLabel pointsLabel;
+    private GameControler gameControler;
 
     public GameWindow(){
         final int WAOFC= JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
         Font myFont = new Font("Arial",Font.BOLD,34);
         setLayout(new BorderLayout());
-
-        //test
-        /*this.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                super.mousePressed(e);
-                System.out.println("X: "+e.getX()+"  Y: "+e.getY());
-            }
-        });*/
-        //test
 
         JPanel topBar = new JPanel();
         add(topBar,BorderLayout.PAGE_START);
@@ -66,7 +60,7 @@ public class GameWindow extends JFrame  {
         contentPane.getActionMap().put("press scq", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                gameStatusChange();
+                gameControler.gameStatusChange();
             }
         });
 
@@ -79,16 +73,6 @@ public class GameWindow extends JFrame  {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
-
-    public void gameStatusChange() {
-        String s = (String)JOptionPane.showInputDialog(GameWindow.this, "Type your name: ","Anonymous"); //Wprowadzanie nicku
-        if(s != null) {
-            ScoreFileManager.addScore(s);
-            new MenuWindow();
-            dispose();
-        }
-    }
-
 
     public void addCountryButton(java.util.List<Country> list) {
         for(Country c : list) {
@@ -104,5 +88,26 @@ public class GameWindow extends JFrame  {
 
     public JLabel getDayTimer() {
         return dayTimer;
+    }
+
+    public void setGameControler(GameControler gameControler) {
+        this.gameControler = gameControler;
+    }
+
+    @Override
+    public void run() {
+        while(!Thread.currentThread().isInterrupted()) {
+            try {
+                sleep(3000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            gameControler.getGameModel().fireEvent(new EventObject(this));
+
+            getDayTimer().setText("Day: "+gameControler.getGameModel().getDay());
+            getPointsLabel().setText("Points: "+GameModel.getPoints());
+
+            gameControler.getGameModel().increaseDay();
+        }
     }
 }

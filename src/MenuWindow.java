@@ -88,6 +88,10 @@ public class MenuWindow extends JFrame {
         newGame.addMouseListener(mouseListener);
     }
 
+    void removeStartGameListener(MouseListener mouseListener){
+        newGame.removeMouseListener(mouseListener);
+    }
+
     void addScoreButtonListener(MouseListener mouseListener){
         highScores.addMouseListener(mouseListener);
     }

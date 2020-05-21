@@ -5,41 +5,50 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.EventObject;
 
-public class GameControler extends Thread {
+public class GameControler {
     private GameWindow gameWindow;
     private MenuWindow menuWindow;
     private GameModel gameModel;
     private ScoreWindow scoreWindow;
+    private StartGameListener startGameListener = new StartGameListener();
+    private Thread thread ;
 
     public GameControler(GameModel gameModel,MenuWindow menuWindow, GameWindow gameWindow, ScoreWindow scoreWindow){
         this.gameModel = gameModel;
         this.menuWindow = menuWindow;
         this.gameWindow = gameWindow;
         this.scoreWindow = scoreWindow;
-        start();
+        this.thread = new Thread(gameWindow);
+
         menuWindow.setVisible(true);
 
-        this.menuWindow.addStartGameListener(new StartGameListener());
+        this.menuWindow.addStartGameListener(startGameListener);
         this.menuWindow.addScoreButtonListener(new ScoreButtonListener());
         this.menuWindow.addExitButtonListener(new ExitButtonListener());
 
     }
 
-    @Override
-    public void run(){
-        while(!Thread.currentThread().isInterrupted()) {
-            try {
-                sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            gameModel.fireEvent(new EventObject(this));
 
-            gameWindow.getDayTimer().setText("Day: "+gameModel.getDay());
-            gameWindow.getPointsLabel().setText("Points: "+Points.getPoints());
+    public void gameStatusChange() {
+        String s = (String)JOptionPane.showInputDialog(gameWindow, "Type your name: ","Anonymous"); //Wprowadzanie nicku
+        if(s != null) {
+            ScoreFileManager.addScore(s);
+            menuWindow.setVisible(true);
+            gameWindow.dispose();
 
-            gameModel.increaseDay();
+            gameModel.setDay(0);
+            GameModel.setPoints(0);
+
+            thread.interrupt();
         }
+    }
+
+    public GameModel getGameModel() {
+        return gameModel;
+    }
+
+    public GameWindow getGameWindow() {
+        return gameWindow;
     }
 
     class StartGameListener implements MouseListener {
@@ -61,12 +70,19 @@ public class GameControler extends Thread {
                         Country.setDifficulty(4);
                         break;
                 }
+                menuWindow.removeStartGameListener(startGameListener);
                 gameWindow = new GameWindow();
+                gameWindow.setGameControler(GameControler.this);
                 gameWindow.addCountryButton(gameModel.getWorld());
-                menuWindow.addStartGameListener(new StartGameListener());
+
+                startGameListener = new StartGameListener();
+                menuWindow.addStartGameListener(startGameListener);
 
                 gameWindow.setVisible(true);
                 menuWindow.setVisible(false);
+
+                thread = new Thread(gameWindow);
+                thread.start();
             }
         }
 
